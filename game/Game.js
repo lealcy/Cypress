@@ -3,6 +3,7 @@
 class Game {
     constructor(canvasElement) {
         Game.instance = this;
+        this.drawGuides = false;
         this.canvas = canvasElement;
         this.width = 256;
         this.height = 64;
@@ -20,7 +21,7 @@ class Game {
         this.images = {};
         this.player = {
             x: 128 * this.blockWidth,
-            y: this.blockHeight,
+            y: 20 * this.blockHeight,
         };
         this.fallSpeed = this.blockHeight / 1.5;
         this.loadImages();
@@ -70,14 +71,6 @@ class Game {
         if (this.player.y > (this.playerBlockY() + 1) * this.blockHeight) {
             this.player.y = (this.playerBlockY() + 1) * this.blockHeight;
         }
-
-        console.log(this.player.x, this.player.y, this.playerBlockX() * this.blockWidth, this.playerBlockY() * this.blockHeight);
-
-        /*if (this.blocks[this.playerBlockX()][this.playerBlockY()].empty) {
-            this.player.y += this.fallSpeed;
-        } else if (this.player.y > (this.playerBlockY() - 1) * this.blockHeight) {
-            this.player.y = this.playerBlockY() * this.blockHeight;
-        }*/
     }
     centerOnPlayer() {
         let x = -this.player.x + this.canvas.width / 2 - this.blockWidth / 2;
@@ -98,12 +91,14 @@ class Game {
                         this.blockHeight 
                     );
                 }
-                this.ctx.strokeRect(
-                    x * this.blockWidth, 
-                    y * this.blockHeight,
-                    this.blockWidth,
-                    this.blockHeight 
-                );
+                if (this.drawGuides) {
+                    this.ctx.strokeRect(
+                        x * this.blockWidth, 
+                        y * this.blockHeight,
+                        this.blockWidth,
+                        this.blockHeight 
+                    );
+                }
             }
         }
     }
@@ -115,31 +110,41 @@ class Game {
             this.player.y - 2 * this.blockHeight
         );
 
-        this.ctx.strokeStyle = "red";
-        this.ctx.strokeRect(
-            this.playerBlockX() * this.blockWidth, 
-            this.playerBlockY() * this.blockHeight, 
-            this.blockWidth, 
-            this.blockHeight
-        );
-        this.ctx.strokeStyle = "green";
-        this.ctx.strokeRect(
-            this.player.x, 
-            this.player.y,
-            this.blockWidth,
-            2
-        );
+        if (this.drawGuides) {
+            this.ctx.strokeStyle = "red";
+            this.ctx.strokeRect(
+                this.playerBlockX() * this.blockWidth, 
+                this.playerBlockY() * this.blockHeight, 
+                this.blockWidth, 
+                this.blockHeight
+            );
+            this.ctx.strokeStyle = "green";
+            this.ctx.strokeRect(
+                this.player.x, 
+                this.player.y,
+                this.blockWidth,
+                2
+            );
+        }
     }
 
     createWorld() {
+        let terrainHeight = this.random(28, 34);
         for (let x = 0; x < this.width; x++) {
             this.blocks[x] = [];
             for (let y = 0; y < this.height; y++) {
-                //if ()
-                this.blocks[x][y] = {
-                    empty: y < this.random(28, 34) ? true : false,
-                    type: "dirt"
-                };
+                if (y >= terrainHeight) {
+                    this.blocks[x][y] = { empty: false, type: "dirt" };
+                } else {
+                    this.blocks[x][y] = { empty: true, type: "dirt" };
+                }
+            }
+            terrainHeight += this.random(-1, 1);
+            if (terrainHeight < 28) {
+                terrainHeight = 28;
+            }
+            if (terrainHeight > 34) {
+                terrainHeight = 34;
             }
         }
     }
@@ -169,6 +174,6 @@ class Game {
         if (this.blocks[x][y] !== undefined) {
             return this.blocks[x][y];
         }
-        return { x, y, empty: true};
+        return { empty: true, type: "dirt"};
     }
 }
